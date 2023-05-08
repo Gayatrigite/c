@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"send.C": "cpp",
+			"SJF.C": "cpp"
+		}
+	}
+}

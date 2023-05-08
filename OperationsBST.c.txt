@@ -1,0 +1,302 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+struct node{
+    int data;
+    struct node* left;
+    struct node* right;
+};
+
+struct node *create(int data){
+    struct node *temp; 
+    temp=(struct node*)malloc(sizeof(struct node));
+    temp->data=data;
+    temp->left=temp->right=NULL;
+    return temp;
+}
+
+struct node *insert(struct node* root,int data){
+    if(root==NULL){
+        root=create(data);
+    }
+    else if(data<root->data){
+        root->left=insert(root->left,data);
+    }
+    else{
+        root->right=insert(root->right,data);
+    }
+    return root;
+}
+
+struct node* find_min(struct node *root){
+    if(root==NULL){
+        return NULL;
+    }
+    else if(root->left!=NULL)//node with minimum value will have no left child
+    {
+        return find_min(root->left);
+    }
+    return root;
+}
+
+struct node* find_max(struct node *root){
+    if(root==NULL){
+        return NULL;
+    }
+    else if(root->right!=NULL)//node with maximum value will have no right child
+    {
+        return find_min(root->right);
+    }
+    return root;
+}
+
+//QUEUE OPERATIONS
+struct node* queue[100];
+int rear=-1;
+int front=0;
+int queue_count=0;
+
+void enqueue(struct node* data){
+    queue[++rear]=data;
+    queue_count++;
+
+}
+
+struct node* dequeue(){
+    queue_count--;
+    return queue[front++];
+}
+
+bool isqueueEmpty(){
+    return queue_count>0 ? false:true;
+}
+
+void levelWise(struct node* root){
+    if(root==NULL) return;
+    enqueue(root);
+    int level = 0;
+    while(!isqueueEmpty()){
+        int n = queue_count;
+        printf("Level %d : ", level++);
+        for(int i=0; i<n; ++i){
+            struct node* temp = dequeue();
+            printf("%d ", temp->data);
+            if(temp->left!=NULL) enqueue(temp->left);
+            if(temp->right!=NULL) enqueue(temp->right);
+        }
+        printf("\n");
+    }
+    rear=-1;
+    front=0;
+    queue_count=0;
+}
+
+// STACK OPERATIONS
+struct node* arr[100];
+int last = -1;
+
+bool is_empty(){
+    if(last == -1) return true;
+    return false;
+}
+
+struct node* pop(){
+    if(is_empty()) return NULL;
+    return arr[last--]; 
+}
+
+void push(struct node* data){
+    if(last == 99) return;
+    arr[++last] = data;
+}
+
+struct node* top(){
+    if(is_empty()) return NULL;
+    return arr[last];
+}
+
+// PreOrder is just BFS with stack with right going first followed by left node
+void preOrder(struct node* root){
+    if(root == NULL) return;
+    struct node* temp = root;
+    push(temp);
+    while(!is_empty()){
+        temp = pop();
+        printf("%d ", temp->data);
+        if(temp->right!=NULL) push(temp->right);
+        if(temp->left!=NULL) push(temp->left);
+    }
+    last = -1;
+}
+
+void inOrder(struct node* root){
+    if(root==NULL) return;
+    struct node* temp = root;
+    while(true){
+        if(temp != NULL){
+            push(temp);
+            temp = temp->left;
+        }
+        else{
+            if(!is_empty()){
+                temp = pop();
+                printf("%d ", temp->data);
+                temp = temp->right;
+            }
+            else break;
+        }
+    }
+    printf("\n");
+    last = -1;
+}
+
+void postOrder(struct node* root){
+    if(root==NULL) return;
+    struct node* temp = root;
+    do{
+        while(temp){
+            if(temp->right) push(temp->right);
+            push(temp);
+            temp = temp->left;
+        }
+        temp = pop();
+        if(temp->right && temp->right == top()){
+            pop();
+            push(temp);
+            temp = temp->right;
+        }
+        else{
+            printf("%d ", temp->data);
+            temp = NULL;
+        }
+    }while(!is_empty());
+    last = -1;
+}
+
+struct node* delete(struct node* root , int data){
+    //search the item that is to be deleted
+    if(root==NULL){
+        return NULL;
+    }
+    if(data>root->data){
+        root->right=delete(root->right,data);
+    }
+    else if(data<root->data){
+        root->left=delete(root->left,data);
+    }
+    else{
+        //CASE:1 NO child
+        if(root->left==NULL && root->right==NULL){
+            free(root);
+            return NULL;
+        }
+        //CASE 2: ONE child
+        else if(root->left==NULL || root->right==NULL){
+            struct node *temp;
+            if(root->left==NULL){
+                temp=root->right;
+            }
+            else{
+                temp=root->left;
+            }
+            free(root);
+            return temp;
+        }
+        else{
+            //CASE 3: TWO children
+            struct node *temp=find_min(root->right); //find minimum node in right subtree
+            //replace min value in root->temp
+            root->data=temp->data; 
+            //delete the duplicate value from right subtree
+            root->right=delete(root->right,temp->data);
+        }
+    }
+    return root;
+}
+
+void find(struct node* root, int data){
+    if(root==NULL) printf("\nNot found in the tree!\n");
+    if(root->data == data) printf("\nData found in the tree!\n");
+    else if(data<root->data) find(root->left, data);
+    else if(data>root->data) find(root->right, data);
+}
+
+int Height(struct node * node){
+    if(node==NULL){
+        return 0;
+    }
+    else{
+        int LHeight = Height(node->left);
+        int RHeight= Height(node->right);
+        if(LHeight>RHeight){
+            return(LHeight+1);
+        }
+        else{
+            return(RHeight+1);
+        }
+    }
+}
+
+void DisplayLeafNodes(struct node *root){
+    if(root==NULL){
+        return ;
+    }
+    if (root->left == NULL && root->right == NULL) {
+        printf("%d ", root->data);
+    }
+    DisplayLeafNodes(root->left);
+    DisplayLeafNodes(root->right);
+}
+
+void mirror(struct node* root){
+    if(root==NULL) return;
+    struct node* temp = root->left;
+    root->left = root->right;
+    root->right = temp;
+    mirror(root->left);
+    mirror(root->right);
+    levelWise(root);
+}
+
+// Mirror Image without disturbing is BFS with right push into queue first followed by left node
+void mirror_without(struct node* root){
+    if(root==NULL) return;
+    enqueue(root);
+    int level = 0;
+    while(!isqueueEmpty()){
+        int n = queue_count;
+        printf("Level %d : ", level++);
+        for(int i=0; i<n; ++i){
+            struct node* temp = dequeue();
+            printf("%d ", temp->data);
+            if(temp->right!=NULL) enqueue(temp->right);
+            if(temp->left!=NULL) enqueue(temp->left);
+        }
+        printf("\n");
+    }
+    rear=-1;
+    front=0;
+    queue_count=0;
+}
+
+int main(){
+    struct node *root = NULL;
+    root = insert(root,10);
+    root = insert(root,5);
+    root = insert(root, 7);
+    root = insert(root,15);
+    root = insert(root,2);
+    root = insert(root,17);
+    // levelWise(root);
+    // root = delete(root, 5);
+    // levelWise(root);
+    // find(root, 7);
+    // find(root,30);
+    // mirror(root);
+    // preOrder(root);
+    // inOrder(root);
+    // postOrder(root);
+    return 0;
+}
